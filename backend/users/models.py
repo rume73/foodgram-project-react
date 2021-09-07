@@ -7,7 +7,7 @@ from users.managers import UserManager, UserRole
 class User(AbstractUser):
     username = models.CharField(verbose_name='Уникальный юзернейм',
                                 max_length=150, unique=True)
-    password = models.TextField(verbose_name='Пароль', max_length=150)
+    password = models.CharField(verbose_name='Пароль', max_length=150)
     email = models.EmailField(verbose_name='Адрес электронной почты',
                               max_length=254, unique=True)
     first_name = models.CharField(verbose_name='Имя', max_length=150)
