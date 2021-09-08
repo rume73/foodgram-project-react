@@ -14,8 +14,7 @@ class UserResource(resources.ModelResource):
 
 
 class UserAdmin(ImportExportModelAdmin):
-    list_display = ('pk', 'first_name', 'last_name', 'username', 'email',
-                    'role',)
+    search_fields = ('email', 'name',)
 
 
 admin.site.register(User, UserAdmin)

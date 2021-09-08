@@ -23,8 +23,9 @@ mccabe==0.6.1
 odfpy==1.4.1
 openpyxl==3.0.7
 packaging==21.0
-psycopg2-binary==2.9.1
+Pillow==8.3.2
 pluggy==0.13.1
+psycopg2-binary==2.9.1
 py==1.10.0
 pycodestyle==2.7.0
 pyflakes==2.3.1

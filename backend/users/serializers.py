@@ -7,7 +7,6 @@ from django.core import exceptions
 from users.models import User
 
 
-
 class ChangePasswordSerializer(serializers.ModelSerializer):
     model = User
     old_password = serializers.CharField(required=True, min_length=8)

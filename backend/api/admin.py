@@ -2,7 +2,7 @@ from django.contrib import admin
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
-from .models import Recipe, Ingredient, Tag
+from .models import Recipe, Ingredient
 
 
 class RecipeResource(resources.ModelResource):
@@ -15,12 +15,14 @@ class RecipeResource(resources.ModelResource):
 
 class RecipeAdmin(ImportExportModelAdmin):
     resource_class = RecipeResource
-    list_display = ('pk', 'author', 'image', 'name', 'description',
-                    'cooking_time', 'ingredients', 'tags', 'subscribers',
-                    'pub_date')
-    search_fields = ('name',)
-    list_filter = ('pub_date',) #пока не точно
+    list_display = ('pk', 'name', 'author',)
+    search_fields = ('name', 'author', 'tags')
+    list_filter = ('pub_date',)
     empty_value_display = '-пусто-'
+
+    def subscribers_count(self, obj):
+        return obj.subscribers.all().count()
+    subscribers_count.short_description = 'Количество сохранений'
 
 
 class IngredientResource(resources.ModelResource):
@@ -32,25 +34,10 @@ class IngredientResource(resources.ModelResource):
 
 class IngredientAdmin(ImportExportModelAdmin):
     resource_class = IngredientResource
-    list_display = ('pk', 'name', 'amount', 'measurement_unit')
-    search_fields = ('name',)
-    empty_value_display = '-пусто-'
-
-
-class TagResource(resources.ModelResource):
-
-    class Meta:
-        model = Tag
-        fields = ('pk', 'name', 'color', 'slug')
-
-
-class TagAdmin(ImportExportModelAdmin):
-    resource_class = TagResource
-    list_display = ('pk', 'name', 'color', 'slug')
+    list_display = ('pk', 'name', 'measurement_unit')
     search_fields = ('name',)
     empty_value_display = '-пусто-'
 
 
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
-admin.site.register(Tag, TagAdmin)
