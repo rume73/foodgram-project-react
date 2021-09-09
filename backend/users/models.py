@@ -1,7 +1,10 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-from users.managers import UserManager, UserRole
+
+class UserRole(models.TextChoices):
+    USER = 'user'
+    ADMIN = 'admin'
 
 
 class User(AbstractUser):
@@ -26,16 +29,7 @@ class User(AbstractUser):
         )
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ('username',)
-    objects = UserManager()
-
-    @property
-    def is_admin(self):
-        return self.role == UserRole.ADMIN
-
-    @property
-    def is_moderator(self):
-        return self.role == UserRole.MODERATOR
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
     class Meta(AbstractUser.Meta):
         ordering = ['username']
@@ -44,3 +38,27 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.username
+
+
+class Follow(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+        verbose_name='Подписчик'
+        )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
+        verbose_name='Автор'
+        )
+
+    class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'подписки'
+        ordering = ['-id']
+        unique_together = ('user', 'author')
+
+    def __str__(self):
+        return f'пользователь {self.user} подписан на {self.author}'

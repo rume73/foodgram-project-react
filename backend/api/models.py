@@ -23,8 +23,8 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField('Тег', max_length=200,)
-    color = models.CharField('Цветовой HEX-код', max_length=7)
+    name = models.CharField('Тег', max_length=200, unique=True,)
+    color = models.CharField('Цветовой HEX-код', max_length=7, unique=True)
     slug = models.SlugField(
         "Часть URL адреса тега",
         unique=True,
@@ -73,13 +73,11 @@ class Recipe(models.Model):
         Ingredient,
         default=None,
         related_name='ingredient',
-        blank=False,
         verbose_name='Ингредиент',
         )
     tags = models.ManyToManyField(
         Tag,
         related_name='tag',
-        blank=False,
         default='завтрак',
         verbose_name='Тег'
         )
@@ -87,7 +85,6 @@ class Recipe(models.Model):
         User,
         default=None,
         related_name='subscribers',
-        blank=True,
         verbose_name='Сохранившие'
         )
     pub_date = models.DateTimeField(
@@ -102,30 +99,6 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class Follow(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='Подписчик'
-        )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='Автор'
-        )
-
-    class Meta:
-        verbose_name = 'подписка'
-        verbose_name_plural = 'подписки'
-        ordering = ['-id']
-        unique_together = ('user', 'author')
-
-    def __str__(self):
-        return f'пользователь {self.user} подписан на {self.author}'
 
 
 class Purchase(models.Model):

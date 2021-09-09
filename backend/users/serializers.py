@@ -1,57 +1,98 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 import django.contrib.auth.password_validation as validators
-from rest_framework import serializers
 from django.core import exceptions
+from rest_framework.validators import UniqueTogetherValidator
+from rest_framework import serializers
 
-from users.models import User
-
-
-class ChangePasswordSerializer(serializers.ModelSerializer):
-    model = User
-    old_password = serializers.CharField(required=True, min_length=8)
-    new_password = serializers.CharField(required=True, min_length=8)
-    new_password_again = serializers.CharField(required=True, min_length=8)
-
-    class Meta:
-        model = User
-        fields = ('old_password', 'new_password', 'new_password_again')
-
-    def validate(self, data):
-        password = data.get('new_password')
-        errors = dict()
-        try:
-            validators.validate_password(password=password)
-        except exceptions.ValidationError as e:
-            errors['new_password'] = list(e.messages)
-        if errors:
-            raise serializers.ValidationError(errors)
-        return super(ChangePasswordSerializer, self).validate(data)
+from .models import User, Follow
+from api.serializers import ShowRecipeAddedSerializer #чек
+from api_foodgram 
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'password', 'email',
-                  'role']
-        extra_kwargs = {
-            'password': {'required': True},
-            'email': {'required': True}
-        }
+        fields = (
+            'id',
+            'email',
+            'is_subscribed',
+            'username',
+            'first_name',
+            'last_name',
+        )
+
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
+            return False
+        user = request.user
+        return Follow.objects.filter(author=obj, user=user).exists()
 
 
-class EmailSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+class ShowFollowersSerializer(serializers.ModelSerializer):
+    recipes = serializers.SerializerMethodField()
+    recipes_count = serializers.SerializerMethodField()
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', 'recipes', 'recipes_count')
+
+    def get_is_subscribed(self, user):
+        current_user = self.context.get('current_user')
+        other_user = user.following.all()
+        if user.is_anonymous:
+            return False
+        if other_user.count() == 0:
+            return False
+        if Follow.objects.filter(user=user, author=current_user).exists():
+            return True
+        return False
+
+    def get_recipes(self, obj):
+        recipes = obj.recipes.all()[:api_foodgram.settings.RECIPES_LIMIT]
+        request = self.context.get('request')
+        return ShowRecipeAddedSerializer(
+            recipes,
+            many=True,
+            context={'request': request}
+        ).data
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
 
 
-class ConfCodeSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    confirmation_code = serializers.CharField()
+class FollowSerializer(serializers.ModelSerializer):
+    queryset = User.objects.all()
+
+    class Meta:
+        model = Follow
+        fields = ('user', 'author')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=['user', 'author'],
+                message=('Вы уже подписались на этого автора.')
+            )
+        ]
 
     def validate(self, data):
-        user = get_object_or_404(User, email=data['email'])
-        if not default_token_generator.check_token(user,
-                                                   data['confirmation_code']):
+        user = self.context['request'].user
+        author = data.get('author')
+        if user == author:
             raise serializers.ValidationError(
-                {'confirmation_code': 'Неверный код подтверждения'})
+                'Нельзя подписаться на самого себя'
+            )
+
         return data
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        return ShowFollowersSerializer(
+            instance.author,
+            context={'request': request}
+        ).data

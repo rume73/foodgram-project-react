@@ -1,10 +1,10 @@
+from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.generics import get_object_or_404
 
 from .models import Recipe, Ingredient, Tag, Purchase, Follow
 from users.serializers import UserSerializer
-from api_foodgram.settings import BASE_URL
 
 User = get_user_model()
 
@@ -28,25 +28,25 @@ class RecipeSerializer(serializers.ModelSerializer):
         read_only=True
     )
     ingredients = IngredientSerializer(many=True, read_only=True)
-    image = serializers.ImageField(
-        max_length=None,
-        required=True,
-        allow_empty_file=False,
-        use_url=True,
-    )
-    image_url = serializers.SerializerMethodField('get_image_url')
-    subscribers = UserSerializer(many=True, read_only=True,)
+    image = Base64ImageField()
+    is_favorited = serializers.SerializerMethodField()
+    is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
         fields = '__all__'
         model = Recipe
 
-    def get_image_url(self, recipe):
-        request = self.context.get('request')
-        if request:
-            image_url = recipe.image.url
+    def is_favorited(self, obj):
+        user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
+        return obj.is_favorited
 
-            return f'{BASE_URL}{image_url}'
+    def is_in_shopping_cart(self, obj):
+        user = self.context.get('request').user
+        if user.is_anonymous:
+            return False
+        return obj.is_in_shopping_cart
 
 
 class FollowSerializer(serializers.ModelSerializer):

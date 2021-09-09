@@ -1,5 +1,6 @@
 import os
 
+from datetime import timedelta
 from dotenv import load_dotenv
 
 
@@ -19,13 +20,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',
+    'djoser',
     'rest_framework',
     'rest_framework.authtoken',
-    'django_filters',
-    'users',
-    'api',
     'corsheaders',
     'import_export',
+    'users',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -69,6 +71,7 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
+
 BASE_URL = 'http://127.0.0.1:8000'
 
 # DATABASES = {
@@ -97,7 +100,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-LANGUAGE_CODE = 'ru'
+LANGUAGE_CODE = 'ru-ru'
 
 TIME_ZONE = 'Europe/Moscow'
 
@@ -125,6 +128,11 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 6,
 }
 
+SIMPLE_JWT = {
+   'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+   'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 AUTH_USER_MODEL = 'users.User'
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
@@ -132,5 +140,3 @@ EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = os.path.join(BASE_DIR, "sent_emails")
 
 DEFAULT_FROM_EMAIL = 'random@foodgram.fake'
-
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

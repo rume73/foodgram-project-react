@@ -10,4 +10,3 @@ class ListCreateDestroyViewSet(
     viewsets.GenericViewSet,
 ):
     permission_classes = [IsAuthenticated]
-    pagination_class = None
