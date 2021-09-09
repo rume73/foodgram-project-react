@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from .models import User, Follow
 from api.serializers import ShowRecipeAddedSerializer #чек
-from api_foodgram 
+from api_foodgram import settings
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -54,7 +54,7 @@ class ShowFollowersSerializer(serializers.ModelSerializer):
         return False
 
     def get_recipes(self, obj):
-        recipes = obj.recipes.all()[:api_foodgram.settings.RECIPES_LIMIT]
+        recipes = obj.recipes.all()[:settings.RECIPES_LIMIT]
         request = self.context.get('request')
         return ShowRecipeAddedSerializer(
             recipes,
