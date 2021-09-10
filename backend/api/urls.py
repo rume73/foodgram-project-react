@@ -24,8 +24,7 @@ router.register(r'recipes/download_shopping_cart/', PurchaseAPIView,
 
 
 urlpatterns = [
-    path('', include(router.urls),),
-    path('users/', include('users.urls')),
+    path('', include(router.urls)),
     path('download/', download_purchases),
     path('docs/', TemplateView.as_view(template_name='redoc.html'),
          name='docs'),

@@ -12,6 +12,7 @@ from .models import (
     Favorite,
     IngredientAmount
     )
+from users.serializers import UserSerializer
 
 User = get_user_model()
 
@@ -53,22 +54,22 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
-    author = serializers.SlugRelatedField(
-        slug_field='username',
-        read_only=True
-    )
-    ingredients = IngredientAmountSerializer(
-        source='ingredientamount_set',
-        many=True,
-        read_only=True,
-    )
+    author = UserSerializer(read_only=True)
+    ingredients = serializers.SerializerMethodField()
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
 
     class Meta:
-        fields = '__all__'
         model = Recipe
+        fields = ('id', 'tags', 'author', 'ingredients',
+                  'is_favorited', 'is_in_shopping_cart',
+                  'name', 'image', 'description', 'cooking_time')
+    
+    def get_ingredients(self, obj):
+        recipe = obj
+        qs = recipe.recipes_ingredients_list.all()
+        return IngredientAmountSerializer(qs, many=True).data
 
     def get_is_favorited(self, obj):
         user = self.context.get('request').user

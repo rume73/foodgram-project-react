@@ -82,12 +82,6 @@ class Recipe(models.Model):
         default='завтрак',
         verbose_name='Тег'
         )
-    subscribers = models.ManyToManyField(
-        User,
-        default=None,
-        related_name='subscribers',
-        verbose_name='Сохранившие'
-        )
     pub_date = models.DateTimeField(
         'Дата публикации',
         auto_now_add=True
