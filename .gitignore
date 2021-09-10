@@ -71,6 +71,9 @@ instance/
 #Static
 */static/
 
+#Media
+*/media/
+
 # Sphinx documentation
 docs/_build/
 
