@@ -6,8 +6,7 @@ from rest_framework import routers
 from .views import (
     RecipeViewSet,
     IngredientViewSet,
-    FollowListCreateAPIView,
-    FollowDestroyAPIView,
+    TagViewSet,
     FavoriteAPIView,
     PurchaseAPIView,
     download_purchases
@@ -17,6 +16,7 @@ from .views import (
 router = routers.DefaultRouter()
 router.register(r'recipes', RecipeViewSet, basename='recipes')
 router.register(r'ingredients', IngredientViewSet, basename='ingredients')
+router.register(r'tags', TagViewSet, basename='tags')
 router.register(r'recipes/(?P<recipe_id>\d+)/favorite',
                 FavoriteAPIView, basename='favorite'),
 router.register(r'recipes/download_shopping_cart/', PurchaseAPIView,
@@ -26,8 +26,6 @@ router.register(r'recipes/download_shopping_cart/', PurchaseAPIView,
 urlpatterns = [
     path('', include(router.urls),),
     path('users/', include('users.urls')),
-    path('subscriptions/', FollowListCreateAPIView.as_view()),
-    path('subscriptions/<int:pk>/', FollowDestroyAPIView.as_view()),
     path('download/', download_purchases),
     path('docs/', TemplateView.as_view(template_name='redoc.html'),
          name='docs'),

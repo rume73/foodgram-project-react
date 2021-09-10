@@ -1,24 +1,54 @@
 from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework.generics import get_object_or_404
+from rest_framework.validators import UniqueTogetherValidator
 
-from .models import Recipe, Ingredient, Tag, Purchase, Follow
-from users.serializers import UserSerializer
+from .models import (
+    Recipe,
+    Ingredient,
+    Tag,
+    Purchase,
+    Favorite,
+    IngredientAmount
+    )
 
 User = get_user_model()
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+
     class Meta:
         fields = '__all__'
         model = Ingredient
 
 
 class TagSerializer(serializers.ModelSerializer):
+
     class Meta:
         fields = '__all__'
         model = Tag
+
+
+class IngredientAmountSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+        source='ingredient.id'
+    )
+    name = serializers.SlugRelatedField(
+        source='ingredient.name',
+        read_only=True,
+        slug_field='name'
+    )
+    measurement_unit = serializers.SlugRelatedField(
+        source='ingredient',
+        read_only=True,
+        slug_field='measurement_unit'
+    )
+
+    class Meta:
+        model = IngredientAmount
+        fields = '__all__'
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -27,7 +57,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         slug_field='username',
         read_only=True
     )
-    ingredients = IngredientSerializer(many=True, read_only=True)
+    ingredients = IngredientAmountSerializer(
+        source='ingredientamount_set',
+        many=True,
+        read_only=True,
+    )
     image = Base64ImageField()
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -36,45 +70,42 @@ class RecipeSerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = Recipe
 
-    def is_favorited(self, obj):
+    def get_is_favorited(self, obj):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
         return obj.is_favorited
 
-    def is_in_shopping_cart(self, obj):
+    def get_is_in_shopping_cart(self, obj):
         user = self.context.get('request').user
         if user.is_anonymous:
             return False
         return obj.is_in_shopping_cart
+    
+    def validate(self, data):
+        ingredients = self.initial_data.get('ingredients')
+        for ingredient_item in ingredients:
+            if int(ingredient_item['amount']) < 0:
+                raise serializers.ValidationError({
+                    'ingredients': ('Убедитесь, что значение количества '
+                                    'ингредиента больше 0')
+                })
+        data['ingredients'] = ingredients
+        return data
 
 
-class FollowSerializer(serializers.ModelSerializer):
-    user = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='username'
-    )
-    author = serializers.SlugRelatedField(
-        read_only=True,
-        slug_field='username'
-    )
-
-    def validate(self, attrs):
-        if self.context.get('request').method == 'POST':
-            author_username = self.context.get('request').data.get('author')
-            author = get_object_or_404(User, username=author_username)
-            user = self.context.get('request').user
-            if user == author:
-                raise serializers.ValidationError(
-                    'Нельзя подписаться на самого себя')
-            if Follow.objects.filter(user=user, author=author):
-                raise serializers.ValidationError(
-                    'Вы уже подписаны на этого автора')
-        return attrs
+class AddFavouriteRecipeSerializer(serializers.ModelSerializer):
 
     class Meta:
-        fields = '__all__'
-        model = Follow
+        model = Favorite
+        fields = ('user', 'recipe')
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=['user', 'recipe'],
+                message=('Вы уже добавили рецепт в избранное.')
+            )
+        ]
 
 
 class PurchaseSerializer(serializers.ModelSerializer):

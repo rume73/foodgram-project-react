@@ -2,30 +2,42 @@ import json
 import tempfile
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import Response, HttpResponse
-from rest_framework.decorators import api_view, permission_classes
+from django.shortcuts import HttpResponse
 
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.generics import (
     get_object_or_404,
     )
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from wsgiref.util import FileWrapper
 
-from .models import Recipe, Ingredient, Tag, Purchase
+from .permissions import AdminOrAuthorOrReadOnly
 from .serializers import (
     RecipeSerializer,
     IngredientSerializer,
     PurchaseSerializer,
+    TagSerializer,
     )
+from .models import (Recipe, Ingredient, Tag, Purchase, Favorite,
+                     IngredientAmount)
 from .viewsets import ListCreateDestroyViewSet
 
 User = get_user_model()
 
 
-class IngredientViewSet(viewsets.ModelViewSet):
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [AllowAny, ]
+    pagination_class = None
+
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    permission_classes = [AllowAny, ]
     pagination_class = None
 
 
@@ -34,6 +46,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     filter_backends = [DjangoFilterBackend, ]
     filter_fields = ['author__username', ]
+    permission_classes = [AdminOrAuthorOrReadOnly, ]
 
     def create(self, request, *args, **kwargs):
         request_ingredients = json.loads(self.request.data.get('ingredient'))
@@ -117,6 +130,7 @@ class FavoriteAPIView(ListCreateDestroyViewSet):
 class PurchaseAPIView(ListCreateDestroyViewSet):
     queryset = Purchase.objects.all()
     serializer_class = PurchaseSerializer
+    permission_classes = [IsAuthenticated, ]
     pagination_class = None
 
     def get_queryset(self):
