@@ -2,7 +2,6 @@ from rest_framework.validators import UniqueTogetherValidator
 from rest_framework import serializers
 
 from .models import User, Follow
-from api.serializers import RecipeSerializer
 from api_foodgram import settings
 
 
@@ -50,6 +49,7 @@ class ShowFollowersSerializer(serializers.ModelSerializer):
         return False
 
     def get_recipes(self, obj):
+        from api.serializers import RecipeSerializer
         recipes = obj.recipes.all()[:settings.RECIPES_LIMIT]
         request = self.context.get('request')
         return RecipeSerializer(
