@@ -1,14 +1,15 @@
 from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
-from .views import FollowAPIView, ListFollowView, UserView
+from .views import CustomUserViewSet, UserView
+
+
+router = DefaultRouter()
+router.register('users', CustomUserViewSet)
 
 urlpatterns = [
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.authtoken')),
-    path('users/<int:author_id>/subscribe/', FollowAPIView.as_view(),
-         name='subscribe'),
-    path('users/subscriptions/', ListFollowView.as_view(),
-         name='subscriptions'),
     path('users/me/', UserView.as_view(), name='me'),
-    path('', include('djoser.urls')),
+    path('', include(router.urls)),
 ]

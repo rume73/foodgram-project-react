@@ -1,4 +1,3 @@
-from rest_framework.validators import UniqueTogetherValidator
 from rest_framework import serializers
 
 from .models import User, Follow
@@ -27,26 +26,25 @@ class UserSerializer(serializers.ModelSerializer):
         return Follow.objects.filter(author=obj, user=user).exists()
 
 
-class ShowFollowersSerializer(serializers.ModelSerializer):
+class FollowSerializer(serializers.ModelSerializer):
+    id = serializers.ReadOnlyField()
+    email = serializers.ReadOnlyField()
+    username = serializers.ReadOnlyField()
+    first_name = serializers.ReadOnlyField()
+    last_name = serializers.ReadOnlyField()
+    is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
-    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
-        model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+        model = Follow
+        fields = ('id', 'email', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
 
-    def get_is_subscribed(self, user):
-        current_user = self.context.get('current_user')
-        other_user = user.following.all()
-        if user.is_anonymous:
-            return False
-        if other_user.count() == 0:
-            return False
-        if Follow.objects.filter(user=user, author=current_user).exists():
-            return True
-        return False
+    def get_is_subscribed(self, obj):
+        return Follow.objects.filter(
+            user=obj.user, author=obj.sauthor
+        ).exists()
 
     def get_recipes(self, obj):
         from api.serializers import ShowRecipeAddedSerializer
@@ -61,34 +59,5 @@ class ShowFollowersSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         return obj.recipes.count()
 
-
-class FollowSerializer(serializers.ModelSerializer):
-    queryset = User.objects.all()
-
-    class Meta:
-        model = Follow
-        fields = ('user', 'author')
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=['user', 'author'],
-                message=('Вы уже подписались на этого автора.')
-            )
-        ]
-
-    def validate(self, data):
-        user = self.context['request'].user
-        author = data.get('author')
-        if user == author:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя'
-            )
-
-        return data
-
-    def to_representation(self, instance):
-        request = self.context.get('request')
-        return ShowFollowersSerializer(
-            instance.author,
-            context={'request': request}
-        ).data
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()
