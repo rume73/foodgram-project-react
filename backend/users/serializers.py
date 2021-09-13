@@ -49,10 +49,10 @@ class ShowFollowersSerializer(serializers.ModelSerializer):
         return False
 
     def get_recipes(self, obj):
-        from api.serializers import RecipeSerializer
+        from api.serializers import ShowRecipeAddedSerializer
         recipes = obj.recipes.all()[:settings.RECIPES_LIMIT]
         request = self.context.get('request')
-        return RecipeSerializer(
+        return ShowRecipeAddedSerializer(
             recipes,
             many=True,
             context={'request': request}

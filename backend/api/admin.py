@@ -77,7 +77,7 @@ class PurchaseAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'user',
-        'purchase',
+        'recipe',
     )
     empty_value_display = '-пусто-'
 

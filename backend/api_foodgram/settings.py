@@ -131,6 +131,8 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 6,
 }
 
+RECIPES_LIMIT = 3
+
 AUTH_USER_MODEL = 'users.User'
 
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"

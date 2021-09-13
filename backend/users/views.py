@@ -15,14 +15,14 @@ User = get_user_model()
 
 class UserView(RetrieveAPIView):
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
 
 
 class FollowAPIView(APIView):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, author_id):
         user = request.user
@@ -48,7 +48,7 @@ class FollowAPIView(APIView):
 
 
 class ListFollowView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
     serializer_class = ShowFollowersSerializer
 
     def get_serializer_context(self):

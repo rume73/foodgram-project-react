@@ -1,28 +1,25 @@
-import json
-import tempfile
-from django.contrib.auth import get_user_model
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import HttpResponse
+from datetime import date
 
-from rest_framework.decorators import api_view, permission_classes
+from django.contrib.auth import get_user_model
+from django.shortcuts import HttpResponse
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets, status
-from rest_framework.generics import (
-    get_object_or_404,
-    )
+from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from wsgiref.util import FileWrapper
 
+from .filters import IngredientSearchFilter, TagAndAuthorFilter
 from .permissions import AdminOrAuthorOrReadOnly
 from .serializers import (
     RecipeSerializer,
+    RecipeCreateSerializer,
     IngredientSerializer,
     PurchaseSerializer,
+    AddFavouriteRecipeSerializer,
     TagSerializer,
     )
 from .models import (Recipe, Ingredient, Tag, Purchase, Favorite,
                      IngredientAmount)
-from .viewsets import ListCreateDestroyViewSet
 
 User = get_user_model()
 
@@ -30,142 +27,128 @@ User = get_user_model()
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
     pagination_class = None
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    permission_classes = [AllowAny, ]
+    permission_classes = [AllowAny]
+    filter_backends = [IngredientSearchFilter]
+    search_fields = ['^name']
     pagination_class = None
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    filter_backends = [DjangoFilterBackend, ]
-    filter_fields = ['author__username', ]
-    permission_classes = [AdminOrAuthorOrReadOnly, ]
+    filter_class = TagAndAuthorFilter
+    permission_classes = [AdminOrAuthorOrReadOnly]
 
-    def create(self, request, *args, **kwargs):
-        request_ingredients = json.loads(self.request.data.get('ingredient'))
-        request_tags = json.loads(self.request.data.get('tag'))
-        ingredients = []
-        for request_ingredient in request_ingredients:
-            ingredients.append(Ingredient.objects.get_or_create(
-                name=request_ingredient.get('name'),
-                amount=request_ingredient.get('amount'),
-                measurement_unit=request_ingredient.get(
-                    'measurement_unit'))[0]
-                    )
-        author = get_object_or_404(User, username=self.request.user)
-        tags = Tag.objects.filter(name__in=request_tags)
-        serializer = RecipeSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(ingredient=ingredients,
-                            tag=tags,
-                            author=author)
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def get_serializer_class(self):
+        if self.request.method in ('POST', 'PUT', 'PATCH'):
+            return RecipeCreateSerializer
 
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        request_ingredients = self.request.data.get('ingredient')
-        request_ingredients = json.loads(request_ingredients)
+        return RecipeSerializer
 
-        request_tags = self.request.data.get('tag')
-        request_tags = json.loads(request_tags)
-
-        ingredients = []
-        for request_ingredient in request_ingredients:
-            ingredients.append(Ingredient.objects.get_or_create(
-                name=request_ingredient.get('name'),
-                amount=request_ingredient.get('amount'),
-                units=request_ingredient.get('measurement_unit'))[0])
-        author = get_object_or_404(User, username=self.request.user)
-        tags = Tag.objects.filter(name__in=request_tags)
-        serializer = self.get_serializer(instance,
-                                         data=request.data,
-                                         partial=True)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        serializer.save(ingredient=ingredients,
-                        tag=tags,
-                        author=author)
-        return Response(serializer.data)
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({'request': self.request})
+        return context
 
 
-class FavoriteAPIView(ListCreateDestroyViewSet):
-    queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
-    filter_backends = [DjangoFilterBackend, ]
-    filter_fields = ['author__username', ]
+class FavoriteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        tag_list = self.request.GET.getlist('tag__name')
-        if tag_list:
-            queryset = Recipe.objects.filter(
-                subscribers=self.request.user,
-                tag__name__in=tag_list).distinct()
-        else:
-            queryset = Recipe.objects.filter(subscribers=self.request.user)
-        return queryset
-
-    def create(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe,
-                                   pk=self.request.data.get('favorite'))
-        recipe.subscribers.add(self.request.user)
-        serializer = self.get_serializer(recipe)
+    def get(self, request, recipe_id):
+        user = request.user
+        data = {
+            'user': user.id,
+            'recipe': recipe_id,
+        }
+        serializer = AddFavouriteRecipeSerializer(
+            data=data, context={'request': request}
+        )
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def destroy(self, request, *args, **kwargs):
-        recipe = get_object_or_404(Recipe,
-                                   pk=self.kwargs['pk'])
-        recipe.subscribers.remove(self.request.user)
-        serializer = self.get_serializer(recipe)
-        return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+    def delete(self, request, recipe_id):
+        user = request.user
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        obj = Favorite.objects.filter(user=user, recipe=recipe)
+        if obj.exists():
+            obj.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'errors': 'Такого рецепта нет в избранном'},
+            status=status.HTTP_400_BAD_REQUEST
+            )
 
 
-class PurchaseAPIView(ListCreateDestroyViewSet):
-    queryset = Purchase.objects.all()
-    serializer_class = PurchaseSerializer
-    permission_classes = [IsAuthenticated, ]
-    pagination_class = None
+class PurchaseAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        queryset = Purchase.objects.filter(user=self.request.user)
-        return queryset
+    def get(self, request, recipe_id):
+        user = request.user
+        data = {
+            'user': user.id,
+            'recipe': recipe_id,
+        }
+        context = {'request': request}
+        serializer = PurchaseSerializer(data=data, context=context)
+        if not serializer.is_valid():
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def perform_create(self, serializer):
-        recipe = get_object_or_404(Recipe,
-                                   pk=self.request.data.get('purchase'))
-        serializer.save(user=self.request.user,
-                        purchase=recipe)
+    def delete(self, request, recipe_id):
+        user = request.user
+        recipe= get_object_or_404(Recipe, id=recipe_id)
+        obj = Purchase.objects.filter(user=user, recipe=recipe)
+        if obj.exists():
+            obj.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'errors': 'Рецепт уже удален'},
+            status=status.HTTP_400_BAD_REQUEST
+            )
 
 
-@api_view(http_method_names=['POST'])
-@permission_classes((IsAuthenticated, ))
-def download_purchases(request, *args, **kwargs):
-    ingredients = {}
-    for item in request.data:
-        for ingredient in item['purchase']['ingredient']:
-            ingredient_key = (f"{ingredient['name']}"
-                              f"({ingredient['measurement_unit']})")
-            if ingredient_key in ingredients.keys():
-                ingredients[ingredient_key] += ingredient['amount']
+class DownloadShoppingCart(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        shopping_list = {}
+        ingredients = IngredientAmount.objects.filter(
+            recipe__purchases__user=request.user
+        )
+        for ingredient in ingredients:
+            amount = ingredient.amount
+            name = ingredient.ingredient.name
+            measurement_unit = ingredient.ingredient.measurement_unit
+            if name not in shopping_list:
+                shopping_list[name] = {
+                    'measurement_unit': measurement_unit,
+                    'amount': amount
+                }
             else:
-                ingredients[ingredient_key] = ingredient['amount']
-
-    with tempfile.TemporaryDirectory():
-        with open('file_text.txt', 'w+') as f:
-            for key in ingredients.keys():
-                f.write(f'{key} — {ingredients[key]}\n')
-
-            f.seek(0)
-            response = HttpResponse(
-                FileWrapper(f),
-                content_type='application/text charset=utf-8')
-            response['Content-Disposition'] = ('attachment; '
-                                               "filename='f.txt'")
-            return response
+                shopping_list[name]['amount'] += amount
+        wishlist = ([f" {item} - {value['amount']} "
+                     f"{value['measurement_unit']} \n"
+                     for item, value in shopping_list.items()])
+        wishlist.append('\n')
+        today = date.today()
+        wishlist.append(f"\n FoodGram, {today.year}")
+        response = HttpResponse(wishlist, 'Content-Type: text/plain')
+        response['Content-Disposition'] = ('attachment;' 
+                                           'filename="wishlist.txt"')
+        return response

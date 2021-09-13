@@ -100,15 +100,19 @@ class Purchase(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='customer',
+        related_name='user_shopping_lists',
         verbose_name='Пользователь'
         )
-    purchase = models.ForeignKey(
+    recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='purchase',
+        related_name='purchases',
         verbose_name='Покупка'
         )
+    when_added = models.DateTimeField(
+        'Дата добавления',
+        auto_now_add=True,
+    )
 
     class Meta:
         verbose_name = 'покупка'
@@ -171,4 +175,3 @@ class Favorite(models.Model):
     def __str__(self):
         return (f'Пользователь: {self.user}, '
                 f'избранные рецепты: {self.recipe.name}')
-
