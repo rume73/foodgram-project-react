@@ -1,7 +1,6 @@
 from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from django.db import transaction
-from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
@@ -11,8 +10,7 @@ from .models import (
     Tag,
     Purchase,
     Favorite,
-    IngredientAmount
-    )
+    IngredientAmount)
 from users.serializers import UserSerializer
 
 User = get_user_model()
@@ -217,7 +215,7 @@ class PurchaseSerializer(AddFavouriteRecipeSerializer):
                 message=('Вы уже добавили рецепт в список покупок.')
             )
         ]
-    
+
     def to_representation(self, instance):
         request = self.context.get('request')
         return ShowRecipeAddedSerializer(

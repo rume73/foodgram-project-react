@@ -32,8 +32,7 @@ class Tag(models.Model):
         max_length=200,
         help_text="Укажите адрес для страницы тэга. "
                   "Используйте только латиницу, цифры, дефисы "
-                  "и знаки подчёркивания"
-        )
+                  "и знаки подчёркивания")
 
     class Meta:
         verbose_name = 'Тег'
@@ -49,43 +48,35 @@ class Recipe(models.Model):
         on_delete=models.SET_NULL,
         related_name='recipes',
         verbose_name='Автор рецепта',
-        null=True
-        )
+        null=True,)
     name = models.CharField(
         max_length=200,
-        verbose_name='Название рецепта',
-        )
+        verbose_name='Название рецепта',)
     image = models.ImageField(
         upload_to='api/',
         verbose_name='Изображение',
         null=True,
         blank=True,
-        help_text='Загрузите изображение'
-        )
+        help_text='Загрузите изображение',)
     text = models.TextField(
         'Описание',
-        help_text='Введите описание рецепта'
-        )
+        help_text='Введите описание рецепта',)
     cooking_time = models.PositiveIntegerField(
         'Время приготовления (в минутах)',
-        validators=[MinValueValidator(1), MaxValueValidator(1440)]
-        )
+        validators=[MinValueValidator(1), MaxValueValidator(1440)],)
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientAmount',
         related_name='ingredients',
-        verbose_name='Ингредиент',
-        )
+        verbose_name='Ингредиент',)
     tags = models.ManyToManyField(
         Tag,
         related_name='tags',
         default='завтрак',
-        verbose_name='Тег'
-        )
+        verbose_name='Тег',)
     pub_date = models.DateTimeField(
         'Дата публикации',
-        auto_now_add=True
-        )
+        auto_now_add=True,)
 
     class Meta:
         ordering = ['-pub_date']
@@ -101,18 +92,15 @@ class Purchase(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='user_shopping_lists',
-        verbose_name='Пользователь'
-        )
+        verbose_name='Пользователь',)
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='purchases',
-        verbose_name='Покупка'
-        )
+        verbose_name='Покупка',)
     when_added = models.DateTimeField(
         'Дата добавления',
-        auto_now_add=True,
-    )
+        auto_now_add=True,)
 
     class Meta:
         verbose_name = 'покупка'

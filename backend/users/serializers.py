@@ -51,8 +51,7 @@ class FollowSerializer(serializers.ModelSerializer):
         from api.serializers import ShowRecipeAddedSerializer
         request = self.context.get('request')
         recipes = Recipe.objects.filter(
-            author=obj.author
-            )[:settings.RECIPES_LIMIT]
+            author=obj.author)[:settings.RECIPES_LIMIT]
         return ShowRecipeAddedSerializer(
             recipes,
             many=True,

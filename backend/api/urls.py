@@ -9,8 +9,7 @@ from .views import (
     TagViewSet,
     FavoriteAPIView,
     PurchaseAPIView,
-    DownloadShoppingCart
-    )
+    DownloadShoppingCart)
 
 
 router = routers.DefaultRouter()

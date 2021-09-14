@@ -16,8 +16,7 @@ from .serializers import (
     IngredientSerializer,
     PurchaseSerializer,
     AddFavouriteRecipeSerializer,
-    TagSerializer,
-    )
+    TagSerializer,)
 from .models import (Recipe, Ingredient, Tag, Purchase, Favorite,
                      IngredientAmount)
 
@@ -49,7 +48,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PUT', 'PATCH'):
             return RecipeCreateSerializer
-
         return RecipeSerializer
 
     def get_serializer_context(self):
@@ -87,8 +85,7 @@ class FavoriteAPIView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': 'Такого рецепта нет в избранном'},
-            status=status.HTTP_400_BAD_REQUEST
-            )
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class PurchaseAPIView(APIView):
@@ -112,15 +109,14 @@ class PurchaseAPIView(APIView):
 
     def delete(self, request, recipe_id):
         user = request.user
-        recipe= get_object_or_404(Recipe, id=recipe_id)
+        recipe = get_object_or_404(Recipe, id=recipe_id)
         obj = Purchase.objects.filter(user=user, recipe=recipe)
         if obj.exists():
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': 'Рецепт уже удален'},
-            status=status.HTTP_400_BAD_REQUEST
-            )
+            status=status.HTTP_400_BAD_REQUEST)
 
 
 class DownloadShoppingCart(APIView):
@@ -149,6 +145,6 @@ class DownloadShoppingCart(APIView):
         today = date.today()
         wishlist.append(f"\n FoodGram, {today.year}")
         response = HttpResponse(wishlist, 'Content-Type: text/plain')
-        response['Content-Disposition'] = ('attachment;' 
+        response['Content-Disposition'] = ('attachment;'
                                            'filename="wishlist.txt"')
         return response
