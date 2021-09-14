@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from .models import User, Follow
+from api.models import Recipe
 from api_foodgram import settings
 
 
@@ -43,13 +44,15 @@ class FollowSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         return Follow.objects.filter(
-            user=obj.user, author=obj.sauthor
+            user=obj.user, author=obj.author
         ).exists()
 
     def get_recipes(self, obj):
         from api.serializers import ShowRecipeAddedSerializer
-        recipes = obj.recipes.all()[:settings.RECIPES_LIMIT]
         request = self.context.get('request')
+        recipes = Recipe.objects.filter(
+            author=obj.author
+            )[:settings.RECIPES_LIMIT]
         return ShowRecipeAddedSerializer(
             recipes,
             many=True,
@@ -57,7 +60,4 @@ class FollowSerializer(serializers.ModelSerializer):
         ).data
 
     def get_recipes_count(self, obj):
-        return obj.recipes.count()
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()
+        return Recipe.objects.filter(author=obj.author).count()

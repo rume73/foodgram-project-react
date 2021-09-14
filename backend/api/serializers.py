@@ -65,20 +65,15 @@ class RecipeSerializer(serializers.ModelSerializer):
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients',
                   'is_favorited', 'is_in_shopping_cart',
-                  'name', 'image', 'description', 'cooking_time')
+                  'name', 'image', 'text', 'cooking_time')
 
     def get_is_favorited(self, obj):
-        user = self.context.get('request').user
-        if user.is_anonymous:
+        request = self.context.get('request')
+        if request is None or request.user.is_anonymous:
             return False
-        return obj.is_favorited
+        user = request.user
+        return Favorite.objects.filter(recipe=obj, user=user).exists()
 
-    def get_is_in_shopping_cart(self, obj):
-        user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
-        return obj.is_in_shopping_cart
-    
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
@@ -123,7 +118,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'image', 'tags', 'author', 'ingredients',
-                  'name', 'description', 'cooking_time')
+                  'name', 'text', 'cooking_time')
 
     def create_bulk_ingredients(self, recipe, ingredients_data):
         IngredientAmount.objects.bulk_create([
@@ -152,7 +147,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         IngredientAmount.objects.filter(recipe=instance).delete()
         self.create_bulk_ingredients(instance, ingredients_data)
         instance.name = validated_data.pop('name')
-        instance.description = validated_data.pop('description')
+        instance.text = validated_data.pop('text')
         if validated_data.get('image') is not None:
             instance.image = validated_data.pop('image')
         instance.cooking_time = validated_data.pop('cooking_time')
@@ -222,3 +217,10 @@ class PurchaseSerializer(AddFavouriteRecipeSerializer):
                 message=('Вы уже добавили рецепт в список покупок.')
             )
         ]
+    
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        return ShowRecipeAddedSerializer(
+            instance.recipe,
+            context={'request': request}
+        ).data

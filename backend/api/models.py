@@ -62,7 +62,7 @@ class Recipe(models.Model):
         blank=True,
         help_text='Загрузите изображение'
         )
-    description = models.TextField(
+    text = models.TextField(
         'Описание',
         help_text='Введите описание рецепта'
         )
@@ -73,12 +73,12 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='IngredientAmount',
-        related_name='ingredient',
+        related_name='ingredients',
         verbose_name='Ингредиент',
         )
     tags = models.ManyToManyField(
         Tag,
-        related_name='tag',
+        related_name='tags',
         default='завтрак',
         verbose_name='Тег'
         )

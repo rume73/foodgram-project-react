@@ -45,7 +45,7 @@ class RecipeResource(resources.ModelResource):
 
     class Meta:
         model = Recipe
-        fields = ('id', 'author', 'name', 'description', 'cooking_time',
+        fields = ('id', 'author', 'name', 'text', 'cooking_time',
                   'ingredients', 'tags', 'subscribers', 'pub_date')
 
 
