@@ -26,9 +26,4 @@ urlpatterns = [
          name='add_recipe_to_shopping_cart'),
     path('recipes/<int:recipe_id>/favorite/', FavoriteAPIView.as_view(),
          name='add_recipe_to_favorite'),
-    path('docs/', TemplateView.as_view(template_name='redoc.html'),
-         name='docs'),
-    path('docs/openapi-schema.yml',
-         TemplateView.as_view(template_name='openapi-schema.yml'),
-         name='openapi-schema')
 ]

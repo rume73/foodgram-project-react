@@ -1,6 +1,6 @@
 version: '3.3'
-
 services:
+
   frontend:
     build:
       context: ../frontend
@@ -16,9 +16,7 @@ services:
     env_file:
       - ../backend/.env
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: rume73/foodgram-project-react 
     restart: always
     volumes:
       - static_value:/code/static/
@@ -38,8 +36,6 @@ services:
       - ../docs/openapi-schema.yml:/usr/share/nginx/html/api/docs/openapi-schema.yml
     depends_on:
       - backend
-      - frontend
-
 volumes:
   postgres_data:
   static_value:
