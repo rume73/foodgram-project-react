@@ -16,7 +16,7 @@ services:
     env_file:
       - ../backend/.env
   backend:
-    image: rume73/foodgram-project-react 
+    image: rume73/foodgram-project-react:latest
     restart: always
     volumes:
       - static_value:/code/static/
