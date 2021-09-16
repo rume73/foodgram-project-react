@@ -4,7 +4,7 @@ services:
   frontend:
     image: rume73/foodgram-frontend:latest
     volumes:
-      - ./frontend/:/app/result_build/
+      - ../frontend/:/app/result_build/
   db:
     image: postgres:13.2
     container_name: postgresql
