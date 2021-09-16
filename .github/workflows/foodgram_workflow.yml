@@ -64,7 +64,6 @@ jobs:
           stack_file_name: docker-compose.yaml
           script: |
             sudo docker pull rume73/foodgram-backend:latest
-            sudo docker pull rume73/foodgram-frontend:latest
             sudo docker-compose stop
             sudo docker-compose rm backend
             touch .env
