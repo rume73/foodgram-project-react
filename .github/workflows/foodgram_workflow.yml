@@ -47,6 +47,12 @@ jobs:
             context: ./backend/
             push: true
             tags: ${{ secrets.DOCKER_USERNAME }}/foodgram-backend:latest
+        - name: Push frontend to Docker Hub
+          uses: docker/build-push-action@v2
+          with:
+            context: ./frontend/
+            push: true
+            tags: ${{ secrets.DOCKER_USERNAME }}/foodgram-frontend:latest
   deploy:
     runs-on: ubuntu-latest
     needs: build_and_push_to_docker_hub
@@ -59,7 +65,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-          stack_file_name: docker-compose.yml
+          stack_file_name: docker-compose.yaml
           script: |
             sudo docker pull rume73/foodgram-backend:latest
             sudo docker pull rume73/foodgram-frontend:v1.00
