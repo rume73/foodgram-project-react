@@ -1,6 +1,7 @@
 from datetime import date
 
 from django.contrib.auth import get_user_model
+from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,7 +9,7 @@ from rest_framework import viewsets, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .filters import IngredientSearchFilter, TagAndAuthorFilter
+from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import AdminOrAuthorOrReadOnly
 from .serializers import (
     RecipeSerializer,
@@ -42,7 +43,8 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    filter_class = TagAndAuthorFilter
+    filter_backends = [DjangoFilterBackend]
+    filter_class = RecipeFilter
     permission_classes = [AdminOrAuthorOrReadOnly]
 
     def get_serializer_class(self):
