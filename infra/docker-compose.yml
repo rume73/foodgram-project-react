@@ -8,7 +8,7 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     restart: always
     env_file:
-      - ../backend/.env
+      - ./.env
   backend:
     image: rume73/foodgram-backend:latest
     restart: always
@@ -18,7 +18,7 @@ services:
     depends_on:
       - db
     env_file:
-      - ../backend/.env
+      - ./.env
   frontend:
     image: rume73/foodgram-frontend:latest
     volumes:
