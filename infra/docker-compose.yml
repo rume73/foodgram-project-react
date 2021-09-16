@@ -1,8 +1,7 @@
 version: '3.3'
 
 services:
-  frontend:
-    image: rume73/foodgram-frontend:latest
+  image: rume73/foodgram-frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
   db:
