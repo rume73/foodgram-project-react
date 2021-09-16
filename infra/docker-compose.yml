@@ -2,9 +2,7 @@ version: '3.3'
 
 services:
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: rume73/foodgram-frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
   db:
@@ -16,9 +14,7 @@ services:
     env_file:
       - ../backend/.env
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: rume73/foodgram-backend:latest
     restart: always
     volumes:
       - static_value:/code/backend_static/
