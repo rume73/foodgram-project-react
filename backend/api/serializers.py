@@ -161,10 +161,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def validate(self, data):
         ingredients = self.initial_data.get('ingredients')
         if len(ingredients) <= 0:
-            raise serializers.ValidationError({
-                        'ingredients': ('Убедитесь, что хотя бы один '
-                                        'ингредиент добавлен')
-                    })
+            raise serializers.ValidationError(
+                {'ingredients': ('Убедитесь, что хотя бы один '
+                                        'ингредиент добавлен')}
+                                        )
         ingredients_data = []
         for ingredient_item in ingredients:
             if ingredient_item['id'] in ingredients_data:
