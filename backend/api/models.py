@@ -127,7 +127,7 @@ class IngredientAmount(models.Model):
         default=1,
         validators=[MinValueValidator(
             1,
-            "Количество ингредиентов должно быть больше 0"),]
+            "Количество ингредиентов должно быть больше 0"), ]
     )
 
     class Meta:
