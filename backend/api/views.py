@@ -136,8 +136,8 @@ class DownloadShoppingCart(APIView):
                      f"{value['measurement_unit']} \n"
                      for item, value in shopping_list.items()])
         wishlist.append('\n')
-        today = timezone.today()
-        wishlist.append(f"\n FoodGram, {today.year}")
+        today_year = timezone.now().strftime("%Y")
+        wishlist.append(f"\n FoodGram, {today_year}")
         response = HttpResponse(wishlist, 'Content-Type: text/plain')
         response['Content-Disposition'] = ('attachment;'
                                            'filename="wishlist.txt"')
