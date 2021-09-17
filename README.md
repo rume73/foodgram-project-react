@@ -133,4 +133,4 @@ d3eb395676c6   rume73/foodgram_backend:latest       "/entrypoint.sh /bin…"   7
 ## Автор:
 
 * [Владимир Логинов](https://github.com/rume73)
-* [Рабочий сайт Foodgram](http://62.84.114.196) 
+* [Рабочий сайт Foodgram](http://62.84.114.196) http://infoodgram.ml
