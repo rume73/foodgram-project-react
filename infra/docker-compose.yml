@@ -1,10 +1,6 @@
 version: '3.3'
 services:
 
-  frontend:
-    image: rume73/foodgram-frontend:latest
-    volumes:
-      - ../frontend/:/app/result_build/
   db:
     image: postgres:12.4
     container_name: postgresql
@@ -12,11 +8,9 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     restart: always
     env_file:
-      - ../backend/.env
+      - ./.env
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: rume73/foodgram-backend:latest
     restart: always
     volumes:
       - static_value:/code/backend_static/
@@ -24,7 +18,11 @@ services:
     depends_on:
       - db
     env_file:
-      - ../backend/.env
+      - ./.env
+  frontend:
+    image: rume73/foodgram-frontend:latest
+    volumes:
+      - ../frontend/:/app/result_build/
   nginx:
     image: nginx:1.19.3
     ports:
