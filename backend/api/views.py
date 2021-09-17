@@ -1,4 +1,4 @@
-from datetime import date
+from django.utils import timezone
 
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
@@ -70,11 +70,7 @@ class FavoriteAPIView(APIView):
         serializer = AddFavouriteRecipeSerializer(
             data=data, context={'request': request}
         )
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -101,11 +97,7 @@ class PurchaseAPIView(APIView):
         }
         context = {'request': request}
         serializer = PurchaseSerializer(data=data, context=context)
-        if not serializer.is_valid():
-            return Response(
-                serializer.errors,
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -144,7 +136,7 @@ class DownloadShoppingCart(APIView):
                      f"{value['measurement_unit']} \n"
                      for item, value in shopping_list.items()])
         wishlist.append('\n')
-        today = date.today()
+        today = timezone.today()
         wishlist.append(f"\n FoodGram, {today.year}")
         response = HttpResponse(wishlist, 'Content-Type: text/plain')
         response['Content-Disposition'] = ('attachment;'

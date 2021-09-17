@@ -1,8 +1,9 @@
+from collections import Counter
+
 from drf_extra_fields.fields import Base64ImageField
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from .models import (
     Recipe,
@@ -160,7 +161,20 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         ingredients = self.initial_data.get('ingredients')
+        if len(ingredients) <= 1:
+            raise serializers.ValidationError({
+                        'ingredients': ('Убедитесь, что хотя бы один '
+                                        'ингредиент добавлен')
+                    })
+        ingredients_data = []
         for ingredient_item in ingredients:
+            if ingredient_item['id'] in ingredients_data:
+                raise serializers.ValidationError({
+                    'ingredient_item': (
+                        'Убедитесь, что ингредиент не дублируется'
+                        )
+                    })
+            ingredients_data.append(ingredient_item['id'])
             if int(ingredient_item['amount']) <= 0:
                 raise serializers.ValidationError({
                     'ingredients': ('Убедитесь, что значение количества '

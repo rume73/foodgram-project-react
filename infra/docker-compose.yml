@@ -10,7 +10,9 @@ services:
     env_file:
       - ../backend/.env
   backend:
-    image: rume73/foodgram-backend:latest
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
     restart: always
     volumes:
       - static_value:/code/backend_static/

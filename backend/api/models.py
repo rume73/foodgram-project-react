@@ -7,11 +7,6 @@ User = get_user_model()
 
 class Ingredient(models.Model):
     name = models.CharField('Название ингредиента', max_length=200)
-    amount = models.PositiveIntegerField(
-        'Количество',
-        default=1,
-        validators=[MinValueValidator(1), ]
-    )
     measurement_unit = models.CharField('Единицы измерения', max_length=200)
 
     class Meta:
@@ -105,6 +100,10 @@ class Purchase(models.Model):
     class Meta:
         verbose_name = 'покупка'
         verbose_name_plural = 'покупки'
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_shopping')
+        ]
 
     def __str__(self):
         return f'пользователь {self.user} покупает {self.purchase}'
@@ -126,12 +125,18 @@ class IngredientAmount(models.Model):
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество ингредиентов',
         default=1,
-        validators=[MinValueValidator(1), ]
+        validators=[
+            MinValueValidator(1),
+            "Количество ингредиентов должно быть больше 0"]
     )
 
     class Meta:
         verbose_name = 'Количество игредиентов в рецепте'
         verbose_name_plural = verbose_name
+        constraints = [
+            models.UniqueConstraint(fields=['ingredient', 'recipe'],
+                                    name='unique_ingredients_recipes')
+        ]
 
     def __str__(self):
         return f'{self.ingredient} в {self.recipe}'

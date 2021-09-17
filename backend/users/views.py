@@ -39,7 +39,6 @@ class CustomUserViewSet(UserViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         subscribe = Follow.objects.create(user=user, author=author)
-        subscribe.save()
         serializer = FollowSerializer(
             subscribe, context={'request': request}
         )
@@ -61,8 +60,7 @@ class CustomUserViewSet(UserViewSet):
 
     @action(detail=False, permission_classes=[IsAuthenticated])
     def subscriptions(self, request):
-        user = request.user
-        queryset = Follow.objects.filter(user=user)
+        queryset = User.objects.filter(following__user=request.user)
         pages = self.paginate_queryset(queryset)
         serializer = FollowSerializer(
             pages,
