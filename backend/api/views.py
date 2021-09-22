@@ -59,6 +59,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class FavoriteAPIView(APIView):
+    filter_backends = [DjangoFilterBackend]
+    filter_class = RecipeFilter
     permission_classes = [IsAuthenticated]
 
     def get(self, request, recipe_id):
@@ -88,6 +90,7 @@ class FavoriteAPIView(APIView):
 
 class PurchaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
+    pagination_class = None
 
     def get(self, request, recipe_id):
         user = request.user
