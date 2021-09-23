@@ -3,14 +3,16 @@ from django.utils import timezone
 from django.contrib.auth import get_user_model
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import HttpResponse
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework import viewsets, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 
 from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import AdminOrAuthorOrReadOnly
+from .paginations import PageNumberPaginatorModified
 from .serializers import (
     RecipeSerializer,
     RecipeCreateSerializer,
@@ -46,6 +48,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filter_class = RecipeFilter
     permission_classes = [AdminOrAuthorOrReadOnly]
+    pagination_class = PageNumberPaginatorModified
 
     def get_serializer_class(self):
         if self.request.method in ('POST', 'PUT', 'PATCH'):
@@ -59,9 +62,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 
 class FavoriteAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filter_class = RecipeFilter
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, recipe_id):
         user = request.user
@@ -90,7 +93,6 @@ class FavoriteAPIView(APIView):
 
 class PurchaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
-    pagination_class = None
 
     def get(self, request, recipe_id):
         user = request.user
