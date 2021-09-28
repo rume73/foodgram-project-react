@@ -135,7 +135,7 @@ class DownloadShoppingCart(APIView):
                 }
             else:
                 shopping_list[name]['amount'] += amount
-        
+
         pdfmetrics.registerFont(TTFont('FiraSans', 'FiraSans.ttf', 'UTF-8'))
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = ('attachment; '
