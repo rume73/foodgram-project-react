@@ -1,27 +1,24 @@
-from django.utils import timezone
-
 from django.contrib.auth import get_user_model
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import HttpResponse
-from rest_framework import viewsets, status
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfgen import canvas
+from rest_framework import status, viewsets
 from rest_framework.generics import get_object_or_404
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-
 from .filters import IngredientSearchFilter, RecipeFilter
-from .permissions import AdminOrAuthorOrReadOnly
+from .models import (Favorite, Ingredient, IngredientAmount, Purchase, Recipe,
+                     Tag)
 from .paginations import PageNumberPaginatorModified
-from .serializers import (
-    RecipeSerializer,
-    RecipeCreateSerializer,
-    IngredientSerializer,
-    PurchaseSerializer,
-    AddFavouriteRecipeSerializer,
-    TagSerializer,)
-from .models import (Recipe, Ingredient, Tag, Purchase, Favorite,
-                     IngredientAmount)
+from .permissions import AdminOrAuthorOrReadOnly
+from .serializers import (AddFavouriteRecipeSerializer, IngredientSerializer,
+                          PurchaseSerializer, RecipeCreateSerializer,
+                          RecipeSerializer, TagSerializer)
 
 User = get_user_model()
 
@@ -122,9 +119,10 @@ class DownloadShoppingCart(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        user = request.user
         shopping_list = {}
         ingredients = IngredientAmount.objects.filter(
-            recipe__purchases__user=request.user
+            recipe__purchases__user=user
         )
         for ingredient in ingredients:
             amount = ingredient.amount
@@ -137,13 +135,29 @@ class DownloadShoppingCart(APIView):
                 }
             else:
                 shopping_list[name]['amount'] += amount
-        wishlist = ([f" {item} - {value['amount']} "
-                     f"{value['measurement_unit']} \n"
-                     for item, value in shopping_list.items()])
-        wishlist.append('\n')
+        
+        pdfmetrics.registerFont(TTFont('FiraSans', 'FiraSans.ttf', 'UTF-8'))
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = ('attachment; '
+                                           'filename="shopping_list.pdf"')
+        page = canvas.Canvas(response)
+        page.setFont('FiraSans', size=16)
+        height = 750
+        width = 200
+        page.drawString(width, 800, 'Список ингредиентов')
+        i = 1
+        for item, value in shopping_list.items():
+            page.drawString(
+                50,
+                height,
+                (f'{i}) { item } - {value["amount"]}, '
+                 f'{value["measurement_unit"]}')
+            )
+            height -= 25
+            i += 1
+        height -= 50
         today_year = timezone.now().strftime("%Y")
-        wishlist.append(f"\n FoodGram, {today_year}")
-        response = HttpResponse(wishlist, 'Content-Type: text/plain')
-        response['Content-Disposition'] = ('attachment;'
-                                           'filename="wishlist.txt"')
+        page.drawString(width, height, f"FoodGram, {today_year}")
+        page.showPage()
+        page.save()
         return response
